@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="6f736ded-ce67-4a63-a695-05d5a6545795" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/AIBot.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/commands.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/config.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/database/database.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/database/models.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/database/requests.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/handlers/handler_callbacks.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/handlers/handler_commands.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/handlers/handler_states.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/keyboards/keyboards.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/states.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/apps/text.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
+  <component name="ProjectId" id="2sCYlmADps0SY2bs7uz8IxPhXjP" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Programming/PythonBot/AIBot&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.stylelint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.stylelint&quot;: &quot;&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Programming\PythonBot\AIBot\apps" />
+      <recent name="D:\Programming\PythonBot\AIBot\apps\database" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-deb605915726-JavaScript-PY-243.22562.180" />
+        <option value="bundled-python-sdk-85c76a3b01b3-9a18a617cbe4-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-243.22562.180" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="6f736ded-ce67-4a63-a695-05d5a6545795" name="Changes" comment="" />
+      <created>1737961176303</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1737961176303</updated>
+      <workItem from="1737961177515" duration="1924000" />
+      <workItem from="1738080942298" duration="4747000" />
+      <workItem from="1738135328530" duration="3055000" />
+      <workItem from="1738156038249" duration="6184000" />
+      <workItem from="1738166475755" duration="2483000" />
+      <workItem from="1738174588736" duration="1128000" />
+      <workItem from="1738218116041" duration="282000" />
+      <workItem from="1738226406300" duration="2568000" />
+      <workItem from="1738232881816" duration="2547000" />
+      <workItem from="1738240097153" duration="57000" />
+      <workItem from="1738301262092" duration="6646000" />
+      <workItem from="1738307993244" duration="1620000" />
+      <workItem from="1738398853736" duration="14088000" />
+      <workItem from="1738430946578" duration="605000" />
+      <workItem from="1738581843912" duration="2000" />
+      <workItem from="1738595745919" duration="73000" />
+      <workItem from="1738670463781" duration="16000" />
+      <workItem from="1738844844050" duration="1222000" />
+      <workItem from="1738914832499" duration="58000" />
+      <workItem from="1738930503957" duration="1509000" />
+      <workItem from="1739012901286" duration="3934000" />
+      <workItem from="1739025617036" duration="322000" />
+      <workItem from="1739172210487" duration="513000" />
+      <workItem from="1739181366148" duration="631000" />
+      <workItem from="1739184582533" duration="1320000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
