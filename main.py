@@ -3,22 +3,19 @@ import logging
 import os
 
 from aiogram import Bot, Dispatcher
-# from aiogram.dispatcher import router
 from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
-# from handlers.handler_states import router
 
-from apps.handlers.handler_commands import router as commands_router
-from apps.handlers.handler_callbacks import router as callbacks_router
-from apps.handlers.handler_states import router as states_router
+from apps.handlers.commands import router as commands_router
+from apps.handlers.callbacks import router as callbacks_router
+from apps.handlers.states import router as states_router
 
 from apps.commands import set_bot_commands
 
 async def main():
     load_dotenv('.env')
     bot = Bot(token=os.getenv("TOKEN"))
-    dp = Dispatcher(storage=MemoryStorage()) # Стирает данные диспетчера после перезапуска, все данные, которые не хранятся в БД
-    # dp.include_router(router)
+    dp = Dispatcher(storage=MemoryStorage())
 
     dp.include_router(commands_router)
     dp.include_router(callbacks_router)

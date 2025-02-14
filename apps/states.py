@@ -1,9 +1,7 @@
 from aiogram.fsm.state import StatesGroup, State
 
-class DeepSeekState(StatesGroup):
-    waiting_for_promt = State()
+class ImageState(StatesGroup):
+    waiting_for_prompt = State()
 
-class VideoState(StatesGroup):
-    waiting_for_promt = State()
-
-
+class BuyingState(StatesGroup):
+    waiting_for_transaction = State()
