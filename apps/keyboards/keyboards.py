@@ -1,13 +1,6 @@
-from aiogram.filters import callback_data
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, \
-    InlineKeyboardButton
-from aiohttp import request
-from openai.resources import AsyncUploads
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from apps.database import requests
-from apps.database.models import UserSettings
+
 
 main = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='🎨 Создание изображения', callback_data='generate_image')],
@@ -15,6 +8,11 @@ main = InlineKeyboardMarkup(inline_keyboard=[
     InlineKeyboardButton(text='💳 Купить кредиты', callback_data='credits')],
     [InlineKeyboardButton(text='⚙️ Настройки', callback_data='settings'),
      InlineKeyboardButton(text='🖼️ Галерея', callback_data='gallery')]
+])
+
+generate_new_image = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='🎨 Создать ещё одно изображение', callback_data='generate_image')],
+    [InlineKeyboardButton(text='⬅️ Вернуться на главную', callback_data='back')],
 ])
 
 credits = InlineKeyboardMarkup(inline_keyboard=[
@@ -28,8 +26,6 @@ credits = InlineKeyboardMarkup(inline_keyboard=[
 settings = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Стиль изображений', callback_data='image_style')],
     [InlineKeyboardButton(text='Качество изображений', callback_data='image_quality')],
-    [InlineKeyboardButton(text='Русский', callback_data='russian'),
-     InlineKeyboardButton(text='English', callback_data='english')],
     [InlineKeyboardButton(text='⬅️ Вернуться в меню', callback_data='back')],
 ])
 
@@ -39,8 +35,13 @@ profile = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 back = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='⬅️ Назад', callback_data='back'),],
+    [InlineKeyboardButton(text='⬅️ Назад', callback_data='back')],
 ])
+
+def add_checkmark_to_button(name, _callback_data, selected_value):
+    """Добавляет галочку к кнопке, если она выбрана."""
+    return f'✅ {name}' if _callback_data == selected_value else name
+
 async def get_styles_keyboard(user_id: int) -> InlineKeyboardMarkup:
     """Создает клавиатуру с отметкой текущего выбранного стиля."""
     user = await requests.get_user(user_id)
@@ -48,19 +49,16 @@ async def get_styles_keyboard(user_id: int) -> InlineKeyboardMarkup:
     _styles = [
         ("Schnell", "style_schnell"),
         ("Dev", "style_dev"),
-        ("Inpainting", "style_inpainting"),
         ("Realism", "style_realism"),
-        ("PRO", "style_pro"),
-        ("PRO v1.1", "style_pro_v1_1"),
-        ("Ultra", "style_ultra")
+        ("PRO v1.1", "style_PRO v1.1"),
+        ("Ultra", "style_ultra"),
+        ("Inpainting", "style_inpainting"),
     ]
-
-    def add_checkmark(name, _callback_data):
-        return f'✅ {name}' if _callback_data == f'style_{selected_style}' else name
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text=add_checkmark(name, cb_data), callback_data=cb_data)]
+            [InlineKeyboardButton(text=add_checkmark_to_button(name, cb_data, f'style_{selected_style}'),
+                                  callback_data=cb_data)]
             for name, cb_data in _styles
         ]
     )
@@ -77,12 +75,10 @@ async def get_quality_keyboard(user_id: int) -> InlineKeyboardMarkup:
         ("1024x1024", "size_1024x1024"),
         ("2048x2048", "size_2048x2048")
     ]
-    def add_checkmark(name, _callback_data):
-        return f'✅ {name}' if _callback_data == f'size_{selected_size}' else name
-
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text=add_checkmark(name, cb_data), callback_data=cb_data)]
+            [InlineKeyboardButton(text=add_checkmark_to_button(name, cb_data, f'size_{selected_size}'),
+                                  callback_data=cb_data)]
             for name, cb_data in _sizes
         ]
     )

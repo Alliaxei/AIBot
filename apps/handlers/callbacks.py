@@ -1,21 +1,22 @@
-import asyncio
-import os
+import re
 
 from aiogram import Router, F, types
-from aiogram.handlers import callback_query
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
-from sqlalchemy import select
-from aiogram.types import FSInputFile
+from aiogram.utils.media_group import MediaGroupBuilder
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 from apps.database.database import async_session
 from apps.database.models import Gallery, User
-from apps.database.requests import update_user_size
+from apps.database.requests import update_user_size, get_user_with_settings, get_session
 from apps.keyboards import keyboards as kb
 from apps.database import requests
 from apps.keyboards.keyboards import get_styles_keyboard, get_quality_keyboard, back, \
     get_next_page_keyboard
+from apps.services.image_generattion import generate_image
 from apps.states import ImageState, BuyingState
 
 
@@ -35,6 +36,62 @@ def get_profile_text(user) -> str:
         "=======================\n"
         "Выберите действие:\n"
     )
+
+@router.callback_query(F.data == 'generate_image')
+async def generate_image_handler(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_text('Введите текстовое описание изображения...', reply_markup=kb.back)
+    await state.set_state(ImageState.waiting_for_prompt)
+
+@router.message(ImageState.waiting_for_prompt)
+async def process_prompt(message: types.Message, state: FSMContext):
+    session = await get_session()
+    user = await get_user_with_settings(session, message.from_user.id)
+
+    # Проверка промта на валидность
+    prompt_text = message.text.strip()
+
+    if not prompt_text or len(prompt_text) <= 2:
+        await message.answer("❌ Введено слишком короткое описание. Пожалуйста, введите более длинный промт.")
+        return
+    if user and user.settings:
+        model = user.settings.selected_style
+        size = user.settings.image_size
+
+        processing_message = await message.answer("⏳ Изображение генерируется, подождите...")
+
+        image_url = await generate_image(
+            prompt = message.text,
+            model = model,
+            size = size,
+            user_id = user.id
+        )
+        if image_url:
+
+            await processing_message.edit_text("✔️ Изображение успешно сгенерировано!")
+            await message.answer_photo(image_url, caption="Ваша генерация!")
+            new_gallery_item = Gallery(
+                user_id=user.id,
+                image_url=image_url,
+                prompt=message.text,
+            )
+
+            if not session.in_transaction():
+                async with session.begin():
+                    session.add(new_gallery_item)
+                await session.commit()
+            else:
+                session.add(new_gallery_item)
+
+            await session.commit()
+        else:
+            await processing_message.edit_text("❌ Произошла ошибка при генерации изображения. Попробуйте снова.")
+    else:
+        await message.answer("❌ Не удалось загрузить настройки пользователя. Попробуйте снова.")
+
+    await session.close()
+    await state.clear()
+    await message.answer(text="Хотите создать ещё?", reply_markup=kb.generate_new_image)
+
 
 async def show_profile(message: Message):
     user = await requests.get_user(message.from_user.id)
@@ -71,6 +128,14 @@ async def profile_handler(callback: CallbackQuery):
         reply_markup=kb.profile
     )
 
+def remove_markdown(text: str) -> str:
+    text = re.sub(r'\*{1,2}(.*?)\*{1,2}', r'\1', text)
+    text = re.sub(r'_{1,2}(.*?)_{1,2}', r'\1', text)
+    text = re.sub(r'`{1,3}(.*?)`{1,3}', r'\1', text)
+    text = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', text)
+    return text
+
+
 @router.callback_query(F.data == 'update_data')
 async def update_data_handler(callback: CallbackQuery):
     user = await requests.get_user(callback.from_user.id)
@@ -90,19 +155,28 @@ async def update_data_handler(callback: CallbackQuery):
             return
 
         profile_text = get_profile_text(updated_user)
-        await callback.message.edit_text(
-            text=profile_text,
-            parse_mode="Markdown",
-            reply_markup=kb.profile
-        )
-        await callback.answer("✅ Ваши данные успешно обновлены.")
+        profile_text_raw = remove_markdown(profile_text)
+
+        if callback.message.text != profile_text_raw:
+            if len(profile_text) > 4096:
+                await callback.answer("❌ Текст профиля слишком длинный. Сократите данные.")
+                return
+
+            await callback.message.edit_text(
+                text=profile_text,
+                parse_mode="Markdown",
+                reply_markup=kb.profile
+            )
+            await callback.answer("✅ Ваши данные успешно обновлены.")
+        else:
+            await callback.answer("ℹ️ Ваши данные уже актуальны.")
+    except TelegramBadRequest as e:
+        if "MESSAGE_TOO_LONG" in str(e):
+            await callback.answer("❌ Текст профиля слишком длинный. Сократите данные.")
+        else:
+            await callback.answer(f"❌ Ошибка при обновлении: {e}")
     except Exception as e:
         await callback.answer(f"❌ Не удалось обновить данные: {str(e)}")
-
-@router.callback_query(F.data == 'generate_image')
-async def generate_image_handler(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text('Введите текстовое описание изображения...', reply_markup=kb.back)
-    await state.set_state(ImageState.waiting_for_prompt)
 
 @router.callback_query(F.data == 'credits')
 async def credits_handler(callback: CallbackQuery, state: FSMContext):
@@ -160,87 +234,105 @@ async def get_user_db_id(session: AsyncSession, user_id: int) -> int | None:
     return  user.scalar()
 
 async def show_gallery(message: types.Message, user_id: int, offset: int = 0):
+    loading_message = await message.answer("⏳ Идёт запрос в базу данных, подождите...")
     # Получение изображения пользователя
     async with async_session() as session:
         '''Получение первичного ключа'''
         user_id_db = await get_user_db_id(session, user_id)
 
         if user_id_db is None:
-            await message.answer('❌ Пользователь не найден.')
+            await loading_message.edit_text('❌ Пользователь не найден.')
             return
 
         gallery_items = await session.execute(
             select(Gallery)
             .where(Gallery.user_id == user_id_db)
             .order_by(Gallery.created_at.desc())
-            .limit(5)
+            .limit(10)
             .offset(offset)
         )
         gallery_items = gallery_items.scalars().all()
 
+
     if gallery_items:
-        # Формирую ответ с описаниями и т.п.
+        media_group = MediaGroupBuilder()
+
         for item in gallery_items:
-            caption = f"{item.prompt or 'Без описания'}\n📅 {item.created_at.strftime('%d %b, %Y %H:%M:%S')}"
-            image_path = os.path.join("media", "images", item.image_path)
-            image_file = FSInputFile(image_path)
+            caption = f"Промт: {item.prompt or 'Без описания'}\n📅 {item.created_at.strftime('%d %m %Y %H:%M:%S')}"
+            try:
+                media_group.add(type="photo", media=item.image_url, caption=caption)
+            except Exception as e:
+                await loading_message.edit_text("❌ Ошибка при загрузке изображения.")
+                print(f"Ошибка загрузки изображения: {e}")
 
-            await message.answer_photo(
-                photo=image_file,
-                caption=caption
-            )
-            await asyncio.sleep(0.5)
+        await message.answer_media_group(media_group.build())
+        await loading_message.edit_text("Галерея загружена!")
 
-        next_offset = offset + 5
-        print(len(gallery_items))
-        if len(gallery_items) == 5:
+        total_images = await session.scalar(
+            select(func.count(Gallery.id)).where(Gallery.user_id == user_id_db)
+        )
+        next_offset = offset + 10
+        if next_offset < total_images:
             _reply_markup = get_next_page_keyboard(next_offset)
-            _text = "📷 Хотите увидеть больше?"
+            _text = "📷 Вы просмотрели 10 изображений. Хотите увидеть больше?"
             await message.answer(text=_text, reply_markup=_reply_markup)
         else:
-            _reply_markup = back
             _text = "Вы просмотрели все изображения"
-            await message.answer(text=_text, reply_markup=_reply_markup)
-
+            await message.answer(text=_text, reply_markup=back)
     else:
-        await message.answer("Ваша галерея пуста.", reply_markup=back)
+        await loading_message.edit_text("Ваша галерея пуста.", reply_markup=back)
+
 
 @router.callback_query(F.data.startswith('more_images_'))
 async def load_more_images(callback: CallbackQuery):
-    print(f"Callback data: {callback.data}")
+    loading_message = await callback.message.answer("⏳ Идёт запрос в базу данных, подождите...")
     offset = int(callback.data.split('_')[-1])
 
-    async with async_session() as session:
+    async with (async_session() as session):
         user_id_db = await get_user_db_id(session, callback.from_user.id)
         if user_id_db is None:
-            await callback.message.answer('❌ Пользователь не найден.')
+            await loading_message.edit_text('❌ Пользователь не найден.')
             return
 
         gallery_items = await session.execute(
             select(Gallery)
             .where(Gallery.user_id == user_id_db)
             .order_by(Gallery.created_at.desc())
-            .limit(5)
+            .limit(8)
             .offset(offset)
         )
         gallery_items = gallery_items.scalars().all()
 
         if gallery_items:
-            for item in gallery_items:
-                caption = f"{item.prompt or 'Без описания'}\n📅 {item.created_at.strftime('%d %b, %Y %H:%M:%S')}"
-                image_path = os.path.join("media", "images", item.image_path)
-                image_file = FSInputFile(image_path)
+            media_group = MediaGroupBuilder()
 
-                await callback.message.answer_photo(photo=image_file, caption=caption)
-                await asyncio.sleep(0.5)
+            for index, item in enumerate(gallery_items):
+                image_url = item.image_url
+                if not image_url.startswith('http'):
+                    await loading_message.edit_text("❌ Недопустимый URL у изображения.")
+                    return
+                try:
+                    caption = f"Ваш промт: {item.prompt or 'Без описания'}\n📅 {item.created_at.strftime('%d %m %Y %H:%M:%S')}"
+                    media_group.add(type="photo", media=image_url, caption=caption)
+                except Exception as e:
+                    await loading_message.edit_text("❌ Ошибка при загрузке изображения.")
+                    print(f"Ошибка загрузки изображения: {e}")
 
-            next_offset = offset + 5
-            print(len(gallery_items))
-            if len(gallery_items) == 5:
+            await callback.message.answer_media_group(media_group.build())
+            await loading_message.edit_text("Данные загружены!")
+
+            total_images = await session.scalar(
+                select(func.count(Gallery.id)).where(Gallery.user_id == user_id_db)
+            )
+
+            next_offset = offset + 8
+
+            if next_offset < total_images:
                 _reply_markup = get_next_page_keyboard(next_offset)
-                _text = "📷 Вы просмотрели 5 изображений. Хотите увидеть больше?"
+                _text = "📷 Есть ещё изображения. Хотите продолжить?"
                 await callback.message.answer(text=_text, reply_markup=_reply_markup)
             else:
-                _reply_markup = back
                 _text = "Вы просмотрели все изображения"
-                await callback.message.answer(text=_text, reply_markup=_reply_markup)
+                await callback.message.answer(text=_text, reply_markup=back)
+        else:
+            await loading_message.edit_text("❌ Нет изображений для отображения.")

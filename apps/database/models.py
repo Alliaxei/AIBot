@@ -9,6 +9,8 @@ from sqlalchemy import String
 from sqlalchemy import func
 
 TRANSACTION_TYPES = ('recharge', 'spend', 'refund')
+
+TRANSACTION_TOKEN_TYPES = ('spend_tokens', 'earn_tokens')
 class User(Base):
     __tablename__ = 'users'
 
@@ -19,6 +21,8 @@ class User(Base):
     credits: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     transactions = relationship('Transaction', back_populates='user', cascade='all, delete-orphan')
+
+    token_transactions = relationship('TokenTransaction', back_populates='user', cascade='all, delete-orphan')
 
     settings = relationship('UserSettings', back_populates='user', uselist=False,  cascade='all, delete-orphan')
 
@@ -37,11 +41,25 @@ class Transaction(Base):
     user = relationship('User', back_populates='transactions')
 
     @validates("transaction_type")
-    def validate_transaction_type(self, key, value):
+    def validate_transaction_type(self, value):
         if value not in TRANSACTION_TYPES:
             raise ValueError(f"Invalid transaction type: {value}")
         return value
 
+class TokenTransaction(Base):
+    __tablename__ = 'token_transactions'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='Cascade'), nullable=False)
+    amount: Mapped[int] = mapped_column()
+    transaction_date: Mapped[datetime] = mapped_column(DateTime)
+    transaction_type: Mapped[str] = mapped_column(String(15), nullable=False)
+
+    user = relationship('User', back_populates='token_transactions')
+    @validates("transaction_type")
+    def validate_transaction_type(self, key, value):
+        if value not in TRANSACTION_TOKEN_TYPES:
+            raise ValueError(f"Invalid transaction type: {value}")
+        return value
 class UserSettings(Base):
     __tablename__ = 'settings'
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -55,7 +73,8 @@ class Gallery(Base):
     __tablename__ = 'gallery'
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[BIGINT] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'))
-    image_path: Mapped[str] = mapped_column(String, nullable=False)
+    image_path: Mapped[str] = mapped_column(String, nullable=True)
+    image_url: Mapped[str] = mapped_column(String, nullable=True)
     prompt: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now(), nullable=True)
