@@ -116,9 +116,7 @@ async def generate_image(prompt: str, model: str, size: str, user_id: int) -> st
     #                 if not image_list:
     #                     print("Не удалось извлечь URL изображения из ответа.")
     #                     return None
-    #
     #                 image_url = image_list[0]
-    #                 print(f"URL изображения получен: {image_url}")
     #
     #                 async with await get_session() as db_session:
     #                     await save_image_do_db(db_session, user_id, image_url)
