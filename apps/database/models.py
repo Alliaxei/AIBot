@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from sqlalchemy import BIGINT, ForeignKey, Integer, DateTime, Enum
+from sqlalchemy import BIGINT, ForeignKey, Integer, DateTime
 from sqlalchemy.orm import Mapped, relationship, validates
-from sqlalchemy.testing.schema import mapped_column
+from sqlalchemy.orm import mapped_column
 
 from apps.database.database import Base, engine
 from sqlalchemy import String

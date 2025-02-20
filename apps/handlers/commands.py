@@ -1,11 +1,11 @@
 from aiogram import Router
 from aiogram.filters import Command
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message
 
 from aiogram.fsm.context import FSMContext
 from apps.keyboards import keyboards as kb
 from apps.database import requests
-from apps.handlers.callbacks import show_profile, generate_image_handler
+from apps.handlers.callbacks import show_profile
 from apps.states import ImageState, BuyingState
 router = Router()
 

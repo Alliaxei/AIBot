@@ -1,33 +1,66 @@
 import os
-
-
-from aiogram import Router
 from dotenv import load_dotenv
 
+from aiogram import Router, types
+
+from aiogram.fsm.context import FSMContext
+
+from apps.database.models import Gallery
+from apps.database.requests import get_user_with_settings, get_session
 from apps.keyboards import keyboards as kb
+from apps.services.image_generattion import generate_image
+from apps.states import ImageState
 
 router = Router()
 load_dotenv('.env')
 
 GEN_API_KEY = os.getenv('GEN_API_KEY')
-# @router.message(DeepSeekState.waiting_for_prompt)
-# async def process_chatgpt_request(message: Message, state: FSMContext):
-#     user_input = message.text
-#     try:
-#         client = openai.OpenAI(api_key=DEEPSEEK_KEY, base_url="https://api.deepseek.com")
-#
-#         response = client.chat.completions.create(
-#             model='deepseek-chat',
-#             messages=[
-#                 {'role': 'user', 'content': user_input}
-#             ],
-#         )
-#
-#         deepseek_response = response.choices[0].message.content
-#         await message.answer(deepseek_response, reply_markup=kb.main)
-#     except Exception as e:
-#         print(e)
-#         await message.answer(f'Ошибка при запросе к DeepSeek {str(e)}')
-#
-#     await state.clear()
-#
+
+@router.message(ImageState.waiting_for_prompt)
+async def process_prompt(message: types.Message, state: FSMContext):
+    session = await get_session()
+    user = await get_user_with_settings(session, message.from_user.id)
+
+    # Проверка промта на валидность
+    prompt_text = message.text.strip()
+
+    if not prompt_text or len(prompt_text) <= 2:
+        await message.answer("❌ Введено слишком короткое описание. Пожалуйста, введите более длинный промт.")
+        return
+    if user and user.settings:
+        model = user.settings.selected_style
+        size = user.settings.image_size
+
+        processing_message = await message.answer("⏳ Изображение генерируется, подождите...")
+        image_url = await generate_image(
+            prompt = message.text,
+            model = model,
+            size = size,
+            user_id = user.id
+        )
+        if image_url:
+
+            await processing_message.edit_text("✔️ Изображение успешно сгенерировано!")
+            await message.answer_photo(image_url, caption="Ваша генерация!")
+            new_gallery_item = Gallery(
+                user_id=user.id,
+                image_url=image_url,
+                prompt=message.text,
+            )
+
+            if not session.in_transaction():
+                async with session.begin():
+                    session.add(new_gallery_item)
+                await session.commit()
+            else:
+                session.add(new_gallery_item)
+
+            await session.commit()
+        else:
+            await processing_message.edit_text("❌ Произошла ошибка при генерации изображения. Попробуйте снова.")
+    else:
+        await message.answer("❌ Не удалось загрузить настройки пользователя. Попробуйте снова.")
+
+    await session.close()
+    await state.clear()
+    await message.answer(text="Хотите создать ещё?", reply_markup=kb.generate_new_image)

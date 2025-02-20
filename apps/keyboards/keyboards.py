@@ -3,7 +3,7 @@ from apps.database import requests
 
 
 main = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='🎨 Создание изображения', callback_data='generate_image')],
+    [InlineKeyboardButton(text='🎨 Создать изображение', callback_data='generate_image')],
     [InlineKeyboardButton(text='👤 Личный кабинет', callback_data='profile'),
     InlineKeyboardButton(text='💳 Купить кредиты', callback_data='credits')],
     [InlineKeyboardButton(text='⚙️ Настройки', callback_data='settings'),
@@ -16,10 +16,10 @@ generate_new_image = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 credits = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='10 кредитов - 100р', callback_data='10credits'),
-    InlineKeyboardButton(text='50 кредитов - 450р', callback_data='50credits')],
-    [InlineKeyboardButton(text='100 кредитов - 850р', callback_data='100credits'),
-    InlineKeyboardButton(text='250 кредитов - 2000р', callback_data='250credits')],
+    [InlineKeyboardButton(text='50 кредитов - 450₽', callback_data='credits_50'),
+    InlineKeyboardButton(text='200 кредитов - 1800₽', callback_data='credits_200')],
+    [InlineKeyboardButton(text='500 кредитов - 4500₽', callback_data='credits_500'),
+    InlineKeyboardButton(text='1000 кредитов - 8500₽', callback_data='credits_1000')],
     [InlineKeyboardButton(text='⬅️ Назад', callback_data='back')],
 ])
 
@@ -50,7 +50,7 @@ async def get_styles_keyboard(user_id: int) -> InlineKeyboardMarkup:
         ("Schnell", "style_schnell"),
         ("Dev", "style_dev"),
         ("Realism", "style_realism"),
-        ("PRO v1.1", "style_PRO v1.1"),
+        ("PRO", "style_pro"),
         ("Ultra", "style_ultra"),
         ("Inpainting", "style_inpainting"),
     ]
@@ -73,7 +73,7 @@ async def get_quality_keyboard(user_id: int) -> InlineKeyboardMarkup:
     _sizes = [
         ("512x512", "size_512x512"),
         ("1024x1024", "size_1024x1024"),
-        ("2048x2048", "size_2048x2048")
+        ("1536x1536", "size_1536x1536")
     ]
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[

@@ -44,6 +44,12 @@ async def spend_credits(session: AsyncSession, user_id: int, amount: int) -> boo
         print(f"Ошибка при списании кредитов: {e}")
         return False
 
+async def get_user_db_id(session: AsyncSession, user_id: int) -> int | None:
+    user = await session.execute(
+        select(User.id).where(User.telegram_id == user_id)
+    )
+    return user.scalar()
+
 async def add_credits(session: AsyncSession, user_id: int, amount: int) -> bool:
     current_balance = await get_current_credit_balance(session, user_id)
     try:
@@ -61,7 +67,7 @@ async def add_credits(session: AsyncSession, user_id: int, amount: int) -> bool:
         session.add(new_transaction)
         await session.commit()
         return True
-    except Exception as e:
+    except Exception:
         await session.rollback()
         return False
 
