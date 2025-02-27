@@ -1,9 +1,10 @@
 from datetime import datetime
 
+import aiohttp
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from apps.database.database import async_session
-from apps.database.models import User, UserSettings, TokenTransaction
+from apps.database.models import User, UserSettings, TokenTransaction, Transaction
 from sqlalchemy import select, update
 import pytz
 
@@ -13,6 +14,11 @@ async def get_current_credit_balance(session: AsyncSession, user_id: int) -> int
     res = await session.execute(select(User.credits).where(User.id == user_id))
     return res.scalar_one_or_none()
 
+async def get_transaction_by_order_id(session: AsyncSession, order_id: str) -> Transaction | None:
+    result = await session.execute(
+        select(Transaction).where(Transaction.order_id == order_id)
+    )
+    return result.scalar_one_or_none()
 
 async def spend_credits(session: AsyncSession, user_id: int, amount: int) -> bool:
     current_balance = await get_current_credit_balance(session, user_id)
@@ -114,6 +120,17 @@ async def get_user_with_settings(session: AsyncSession, tg_id: int) -> User | No
         select(User).options(joinedload(User.settings)).where(User.telegram_id == tg_id)
     )
 
+async def create_transaction(session: AsyncSession, user_id: int, amount: int, order_id: str,
+                             transaction_type: str = "recharge",
+                             transaction_status: str = "pending", credits_amount: int = 0):
+    """Создаёт запись о транзакции в базе данных."""
+    transaction = Transaction(user_id=user_id, amount=amount, order_id=order_id, transaction_type=transaction_type,
+                              transaction_status=transaction_status, credits_amount=credits_amount)
+    session.add(transaction)
+    await session.commit()
+    return transaction
+
+
 async def get_session() -> AsyncSession:
     async with async_session() as session:
         return session
@@ -139,6 +156,16 @@ async def update_user_style(tg_id: int, new_style: str = None) -> None:
         await get_or_create_user_settings(session, tg_id, 'selected_style', new_style)
         await session.commit()
 
+
+async def check_payment_status(order_id: str) -> dict:
+    url = f"https://your-server.com/check_payment/{order_id}"
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                return await response.json()
+            else:
+                return {"status": "error", "message": "Failed to retrieve payment status"}
 
 async def update_user_size(tg_id: int, new_size: str = None) -> None:
     async with async_session() as session:

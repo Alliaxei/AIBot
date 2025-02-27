@@ -16,10 +16,10 @@ generate_new_image = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 credits = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='50 кредитов - 450₽', callback_data='credits_50'),
-    InlineKeyboardButton(text='200 кредитов - 1800₽', callback_data='credits_200')],
-    [InlineKeyboardButton(text='500 кредитов - 4500₽', callback_data='credits_500'),
-    InlineKeyboardButton(text='1000 кредитов - 8500₽', callback_data='credits_1000')],
+    [InlineKeyboardButton(text='50 кредитов - 450₽', callback_data='credits_50:450'),
+    InlineKeyboardButton(text='200 кредитов - 1800₽', callback_data='credits_200:1800')],
+    [InlineKeyboardButton(text='500 кредитов - 4500₽', callback_data='credits_500:4500'),
+    InlineKeyboardButton(text='1000 кредитов - 8500₽', callback_data='credits_1000:8500')],
     [InlineKeyboardButton(text='⬅️ Назад', callback_data='back')],
 ])
 
@@ -93,3 +93,11 @@ def get_next_page_keyboard(offset: int) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text='⬅️ Назад', callback_data='back'),
         InlineKeyboardButton(text="▶️ Продолжить", callback_data=f"more_images_{offset}")]
     ])
+
+def get_payment_keyboard(url: str, order_id: int, amount: int) -> InlineKeyboardMarkup:
+    payment = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text='💳 Оплатить', url=url)],
+        [InlineKeyboardButton(text='🔄 Проверить', callback_data=f"check_payment:{order_id}_{amount}")],
+        [InlineKeyboardButton(text='⬅️ Назад', callback_data='back_to_payment')],
+    ])
+    return payment
