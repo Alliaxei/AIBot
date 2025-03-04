@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from apps.database import requests
-
+from apps.services.image_generattion import calculate_total_price
 
 main = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='🎨 Создать изображение', callback_data='generate_image')],
@@ -16,11 +16,13 @@ generate_new_image = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 credits = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='50 кредитов - 450₽', callback_data='credits_50:450'),
-    InlineKeyboardButton(text='200 кредитов - 1800₽', callback_data='credits_200:1800')],
-    [InlineKeyboardButton(text='500 кредитов - 4500₽', callback_data='credits_500:4500'),
-    InlineKeyboardButton(text='1000 кредитов - 8500₽', callback_data='credits_1000:8500')],
-    [InlineKeyboardButton(text='⬅️ Назад', callback_data='back')],
+    [InlineKeyboardButton(text='💡 Пробный 25кр — 49₽', callback_data='credits_25:49')],
+    [InlineKeyboardButton(text='💳 60 кредитов — 199₽ (-18%)', callback_data='credits_60:199')],
+    [InlineKeyboardButton(text='💳 150 кредитов — 399₽ (-32%)', callback_data='credits_150:399')],
+    [InlineKeyboardButton(text='💳 500 кредитов — 1190₽ (-40%)', callback_data='credits_500:1190')],
+    [InlineKeyboardButton(text='💳 1200 кредитов — 2490₽ (-48%)', callback_data='credits_1200:2490')],
+    [InlineKeyboardButton(text='🔥 3000 кредитов — 5490₽ (-54%)', callback_data='credits_3000:5490')],
+    [InlineKeyboardButton(text='⬅️ Назад', callback_data='back')]
 ])
 
 settings = InlineKeyboardMarkup(inline_keyboard=[
@@ -46,6 +48,7 @@ async def get_styles_keyboard(user_id: int) -> InlineKeyboardMarkup:
     """Создает клавиатуру с отметкой текущего выбранного стиля."""
     user = await requests.get_user(user_id)
     selected_style = user.settings.selected_style if user.settings else None
+    selected_size = user.settings.image_size if user.settings else "512x512"
     _styles = [
         ("Schnell", "style_schnell"),
         ("Dev", "style_dev"),
@@ -54,15 +57,18 @@ async def get_styles_keyboard(user_id: int) -> InlineKeyboardMarkup:
         ("Ultra", "style_ultra"),
         ("Inpainting", "style_inpainting"),
     ]
+    buttons = []
+    for name, cb_data in _styles:
+        model_key = name.lower()
+        print(f"Calculating price for model: {model_key}, size: {selected_size}")
 
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text=add_checkmark_to_button(name, cb_data, f'style_{selected_style}'),
-                                  callback_data=cb_data)]
-            for name, cb_data in _styles
-        ]
-    )
+        cost = await calculate_total_price(model_key, selected_size)
+        print(f"Cost for {name} model: {cost}")
+        cost_text = f'{cost} кредит.'  if cost is not None else "N/A"
+        button_text = add_checkmark_to_button(f"{name} - {cost_text}", cb_data, f"style_{selected_style}")
+        buttons.append([InlineKeyboardButton(text=button_text, callback_data=cb_data)])
 
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     keyboard.inline_keyboard.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_settings")])
     return keyboard
 

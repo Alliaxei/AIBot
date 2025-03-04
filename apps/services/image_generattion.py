@@ -10,9 +10,7 @@ from apps.database.models import User
 from apps.database.requests import get_current_credit_balance, get_session, spend_credits
 from apps.database.models import Gallery
 
-MEDIA_PATH = 'media/images'
 load_dotenv('.env')
-os.makedirs(MEDIA_PATH, exist_ok=True)
 
 API_URL = 'https://api.gen-api.ru/api/v1/networks/flux'
 
@@ -25,8 +23,17 @@ MODEL_COSTS = {
     "inpainting": 13.5,
 }
 
+MODEL_MULTIPLIERS = {
+    "schnell": 8,
+    "dev": 6.5,
+    "realism": 5.5,
+    "pro": 4.8,
+    "ultra": 4.2,
+    "inpainting": 3.9,
+}
+
 SIZE_COSTS = {
-    "512x512": 1,
+    "512x512": 1.0,
     "1024x1024": 2,
     "1536x1536": 3,
 }
@@ -48,87 +55,77 @@ async def save_image_do_db(session: AsyncSession, user_id: int, image_url: str) 
     session.add(new_image)
     await session.commit()
 
-async def calculate_total_price(model_ration: float, size_ratio: float) -> float | None:
+async def calculate_total_price(model: str, size: str) -> int | None:
     """ Высчитывает итоговый ценник по формуле """
-    k_1 = 20
-    fixed_ratio = 5
+    if model not in MODEL_COSTS or model not in MODEL_MULTIPLIERS:
+        print(f"Ошибка: модель {model} не найдена.")
+        return None
+    if size not in SIZE_COSTS:
+        print(f"Ошибка: размер {size} не найден.")
+        return None
+    base_cost = MODEL_COSTS[model]
+    multiplier = MODEL_MULTIPLIERS[model]
+    size_factor = SIZE_COSTS[size]
 
-    total_cost = model_ration * k_1 * size_ratio + fixed_ratio
-    return total_cost
+    discount = max(0.85, 1 - 0.03 * base_cost)
+    total = base_cost * multiplier * size_factor * discount
+
+    return int(total)
 
 async def generate_image(prompt: str, model: str, size: str, user_id: int) -> str | None:
     """
     Отправляет запрос к API генерации изображений.
     Возвращает путь к загруженному изображению или None в случае ошибки.
     """
+    total_cost = await calculate_total_price(model, size)
+    if total_cost is None:
+        return None
 
-    # model_cost = MODEL_COSTS.get(model, 0)
-    # size_cost = SIZE_COSTS.get(size, 0)
-    #
-    # if model_cost == 0:
-    #     print(f"Ошибка: модель {model} не найдена в MODEL_COSTS.")
-    #     return None
-    # if size_cost == 0:
-    #     print(f"Ошибка: размер {size} не найден в SIZE_COSTS.")
-    #     return None
-    #
-    # total_cost = await calculate_total_price(model_cost, size_cost)
-    #
-    # session = await get_session()
-    # async with session:
-    #     current_balance = await get_current_credit_balance(session, user_id)
-    #     if current_balance is None or current_balance < total_cost:
-    #         print(f"Недостаточно кредитов у пользователя {user_id}. Текущий баланс: {current_balance}")
-    #         return None
-    #
-    #     if not await spend_credits(session, user_id, total_cost):
-    #         print(f"Ошибка списания кредитов у пользователя {user_id}")
-    #         return None
-    #
-    # width, height = size.split('x')
-    #
-    # headers = {
-    #     "Authorization": f"Bearer {os.getenv('GEN_API_KEY')}",
-    #     "Content-Type": "application/json",
-    #     "Accept": "application/json"
-    # }
-    #
-    # payload = {
-    #     "prompt": prompt,
-    #     "model": model,
-    #     "width": width,
-    #     "height": height,
-    #     "is_sync": True,
-    # }
-    #
-    # try:
-    #     async with aiohttp.ClientSession() as session:
-    #         async with session.post(API_URL, json=payload, headers=headers) as response:
-    #             print(f"Ответ от API: {response.status}")
-    #
-    #             content_type = response.headers.get('Content-Type', '')
-    #
-    #             if response.status == 200 and content_type.startswith('application/json'):
-    #                 data = await response.json()
-    #                 print(f"Ответ от API: {data}")
-    #
-    #                 image_list = data.get('images', [])
-    #                 if not image_list:
-    #                     print("Не удалось извлечь URL изображения из ответа.")
-    #                     return None
-    #                 image_url = image_list[0]
-    #
-    #                 async with await get_session() as db_session:
-    #                     await save_image_do_db(db_session, user_id, image_url)
-    #
-    #                 return image_url
-    #             else:
-    #                 error_text = await response.text()
-    #                 print(f"Ошибка {response.status}, ответ от API:\n{error_text}")
-    # except Exception as e:
-    #     print(f"Ошибка при генерации изображения: {e}")
-    #
-    # return None
+    session = await get_session()
+    async with session:
+        current_balance = await get_current_credit_balance(session, user_id)
+        if current_balance is None or current_balance < total_cost:
+            print(f"Недостаточно кредитов у пользователя {user_id}. Текущий баланс: {current_balance}")
+            return "insufficient_credits"
 
-    return 'https://gen-api.storage.yandexcloud.net/input_files/1739787209_67b30bc98f057.png'
+        if not await spend_credits(session, user_id, total_cost):
+            print(f"Ошибка списания кредитов у пользователя {user_id}")
+            return "write_off_error"
+
+    width, height = size.split('x')
+
+    headers = {
+        "Authorization": f"Bearer {os.getenv('GEN_API_KEY')}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+
+    payload = {
+        "prompt": prompt,
+        "model": model,
+        "width": width,
+        "height": height,
+        "is_sync": True,
+    }
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(API_URL, json=payload, headers=headers) as response:
+                content_type = response.headers.get('Content-Type', '')
+
+                if response.status == 200 and content_type.startswith('application/json'):
+                    data = await response.json()
+
+                    image_list = data.get('images', [])
+                    if not image_list:
+                        return None
+                    image_url = image_list[0]
+
+                    async with await get_session() as db_session:
+                        await save_image_do_db(db_session, user_id, image_url)
+                    return image_url
+                else:
+                    error_text = await response.text()
+                    print(f"Ошибка {response.status}, ответ от API:\n{error_text}")
+    except Exception as e:
+        return None
 

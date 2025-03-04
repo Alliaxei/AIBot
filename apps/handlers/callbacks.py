@@ -1,6 +1,5 @@
 import asyncio
 
-
 import aiohttp
 from aiogram import Router, F, types
 from aiogram.exceptions import TelegramBadRequest
@@ -24,7 +23,7 @@ from apps.states import ImageState, BuyingState
 from dotenv import load_dotenv
 
 router = Router()
-DJANGO_API_URL = "https://7cd8-151-115-55-246.ngrok-free.app/api/check_payment/"
+DJANGO_API_URL = "https://4f0e-140-99-101-99.ngrok-free.app/api/check_payment/"
 
 load_dotenv('.env')
 
@@ -146,7 +145,16 @@ async def back_to_settings_handler(callback: CallbackQuery):
 async def image_style_handler(callback: CallbackQuery):
     user = await requests.get_user(callback.from_user.id)
     styles_keyboard = await get_styles_keyboard(user.telegram_id)
-    await callback.message.edit_text(text='Выбери стиль (отсортированы по стоимости):',reply_markup=styles_keyboard)
+    await callback.message.edit_text(
+        text=(
+            '🎨 *Выбери стиль* для генерации изображения.\n\n'
+            '💡 Стиль и размер изображения будут влиять на стоимость.\n'
+            '💵 Убедись, что у тебя достаточно кредитов для выбранного варианта.'
+        ),
+        reply_markup=styles_keyboard,
+        parse_mode="Markdown"
+    )
+
 
 @router.callback_query(F.data == 'image_quality')
 async def image_quality_handler(callback: CallbackQuery):
@@ -283,7 +291,7 @@ async def back_to_payment(callback: CallbackQuery, state: FSMContext):
     await state.set_state(BuyingState.waiting_for_transaction)
 
 @router.callback_query(F.data.startswith('credits_'))
-async def buying_credits(callback: CallbackQuery):
+async def buying_credits(callback: CallbackQuery, state: FSMContext):
     loading_message = await callback.message.answer("⏳ Идёт подготовка ссылки для оплаты, подождите...")
     try:
         data = callback.data.split('_')[1]
@@ -302,51 +310,71 @@ async def buying_credits(callback: CallbackQuery):
         await create_transaction(session, user_db_id, price, order_id,
                                  "recharge", "pending", credits_amount)
 
-    await loading_message.edit_text(f'Для пополнения баланса перейдите по ссылке',
+    await state.update_data(message_id=loading_message.message_id)
+
+    await loading_message.edit_text(f'Пополнение баланса на сумму {price}₽\nВ зависимости от способа оплаты может взиматься комиссия',
                                     reply_markup=payment_keyboard)
 
 
-
-@router.callback_query(lambda c: c.data.startswith('check_payment') )
-async def check_payment(callback: CallbackQuery):
+@router.callback_query(lambda c: c.data.startswith('check_payment'))
+async def check_payment(callback: CallbackQuery, state: FSMContext):
     checking_message = await callback.message.answer("⏳ Идёт проверка, ожидайте...")
     data = callback.data.split(':')[-1]
     order_id, price = data.split('_')
-    print(f"Проверка платежа: order_id={order_id}, price={price}")
 
     payload = {"order_id": order_id}
+
     async with aiohttp.ClientSession() as session:
+        message = "❌ Ошибка проверки платежа. Попробуйте позже."
         try:
-            async with session.get(f'{DJANGO_API_URL}', params=payload, timeout=10) as response:
+            async with session.get(f"{DJANGO_API_URL}", params=payload) as response:
+                content_type = response.headers.get('Content-Type', '')
+                if not content_type.startswith('application/json'):
+                    return await checking_message.edit_text("❌ Некорректный ответ сервера. Попробуйте позже.")
+
                 data = await response.json()
+
+                if response.status != 200:
+                    return await checking_message.edit_text(f"❌ Ошибка: {data.get('message', 'Неизвестная ошибка')}")
+
         except aiohttp.ClientError as e:
             return await checking_message.edit_text(f"❌ Ошибка сети: {e}")
-        except asyncio.TimeoutError:
-            return await checking_message.edit_text("❌ Время ожидания запроса истекло.")
 
-        if response.status == 200:
-            if data.get('status') == 'success':
-                message = "✅ Оплата подтверждена!"
+    print("data " + str(data))
+    status = data.get("status")
+    transaction_status = data.get("transaction_status")
 
-                async with async_session() as session:
-                    user_id_db = await get_user_db_id(session, callback.from_user.id)
+    if status == "success" and transaction_status == "paid":
+        async with async_session() as session:
+            user_id_db = await get_user_db_id(session, callback.from_user.id)
+            transaction = await get_transaction_by_order_id(session, order_id)
 
-                    transaction = await get_transaction_by_order_id(session, order_id)
-                    if transaction:
-                        transaction.transaction_status = 'paid'
+            if transaction:
+                if transaction.credits_added:
+                    message = "✅ Оплата уже была подтверждена ранее."
+                else:
+                    try:
+                        await add_credits(session, user_id_db, transaction.credits_amount)
+                        transaction.credits_added = True
                         await session.commit()
-                        try:
-                            await add_credits(session, user_id_db, transaction.credits_amount)
-                        except Exception as e:
-                            message += f" Обратитесь в поддержку если кредиты не поступили на счёт"
 
-                        message += f" Ваш баланс пополнен на {transaction.credits_amount} кредитов."
-                    else:
-                        message = "❌ Транзакция не найдена. Обратитесь в поддержку."
+                        state_data = await state.get_data()
+                        message_id = state_data.get('message_id')
+
+                        if message_id:
+                            await callback.message.bot.delete_message(callback.message.chat.id, message_id)
+                        message = f"✅ Оплата подтверждена! Ваш баланс пополнен на {transaction.credits_amount} кредитов."
+                    except Exception as e:
+                        message = "❗Ошибка начисления кредитов, обратитесь в поддержку."
+                        print(f"Ошибка при добавлении кредитов: {e}")
+
+
+            elif transaction and transaction.transaction_status == "paid":
+                message = "✅ Оплата уже была подтверждена ранее."
             else:
-                message = "⏳ Оплата еще не прошла, попробуйте позже."
-        else:
-            message = "❌ Ошибка проверки платежа. Попробуйте позже."
+                message = "❌ Транзакция не найдена. Обратитесь в поддержку."
+    elif status == "pending":
+        message = "⏳ Оплата еще не прошла, попробуйте позже."
 
     await checking_message.edit_text(message)
 

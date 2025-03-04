@@ -40,6 +40,8 @@ class Transaction(Base):
     transaction_type: Mapped[str] = mapped_column(String(15), nullable=False)
     transaction_status: Mapped[str] = mapped_column(String(15), nullable=True)
     credits_amount: Mapped[int] = mapped_column(nullable=True)
+    credits_added: Mapped[bool] = mapped_column(default=False, nullable=True)
+
     user = relationship('User', back_populates='transactions')
 
     @validates("transaction_type")

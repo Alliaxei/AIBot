@@ -38,8 +38,19 @@ async def process_prompt(message: types.Message, state: FSMContext):
             size = size,
             user_id = user.id
         )
-        if image_url:
+        if image_url == 'write_off_error':
+            await processing_message.edit_text("❌ Произошла ошибка при списании кредитов. Попробуйте снова.")
+            return
+        if image_url == 'insufficient_credits':
+            await processing_message.edit_text(
+                f"❌ **У вас недостаточно кредитов для генерации изображения.**\n"
+                f"🔴 *Количество ваших кредитов*: {user.credits}\n\n"
+                f"💳 Пополните баланс, чтобы продолжить!"
+                , parse_mode="Markdown", reply_markup=kb.back
+            )
 
+            return
+        if image_url:
             await processing_message.edit_text("✔️ Изображение успешно сгенерировано!")
             await message.answer_photo(image_url, caption="Ваша генерация!")
             new_gallery_item = Gallery(

@@ -7,11 +7,17 @@
     <list default="true" id="6f736ded-ce67-4a63-a695-05d5a6545795" name="Changes" comment="Отсутствует оплата и нормальное описание для бота">
       <change afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/config.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/database/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/database/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/database/requests.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/database/requests.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/handlers/callbacks.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/handlers/callbacks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/handlers/commands.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/handlers/commands.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/handlers/states.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/handlers/states.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/keyboards/keyboards.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/keyboards/keyboards.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/services/payments.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/services/payments.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/scheduler.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/scheduler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/services/image_generattion.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/services/image_generattion.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/media/images/i.jpg" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -189,6 +195,12 @@
       <workItem from="1740566644715" duration="11018000" />
       <workItem from="1740632623136" duration="4412000" />
       <workItem from="1740648427378" duration="5836000" />
+      <workItem from="1740655913306" duration="1672000" />
+      <workItem from="1740719500245" duration="11439000" />
+      <workItem from="1740741794837" duration="1538000" />
+      <workItem from="1740827548004" duration="600000" />
+      <workItem from="1740994851523" duration="11453000" />
+      <workItem from="1741081908041" duration="1337000" />
     </task>
     <task id="LOCAL-00001" summary="До добавления flux для изображений">
       <option name="closed" value="true" />

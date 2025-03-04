@@ -6,15 +6,19 @@ from sqlalchemy import select
 from apps.database.database import async_session
 from apps.database.models import User
 from apps.database.requests import add_credits, moscow_tz
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 CREDITS_PER_DAY = 10
+scheduler = AsyncIOScheduler()
 
-async def add_daily_credits(bot: Bot):
+async def daily_credits_scheduler():
     async with async_session() as session:
-        result = await session.execute(select(User.id))
-        users = result.scalars().all()
+        users = await session.execute(select(User))
+        users = users.scalars().all()
 
-        for user_id in users:
-            await add_credits(session, user_id, CREDITS_PER_DAY)
+        for user in users:
+            await add_credits(session, user.id, CREDITS_PER_DAY)
 
-        print(f"[{datetime.now(moscow_tz)}] Начислены кредиты {len(users)} пользователям.")
+def start_scheduler():
+    scheduler.add_job(daily_credits_scheduler, 'cron', hour=0, minute=0)
+    scheduler.start()

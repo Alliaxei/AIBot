@@ -86,7 +86,7 @@ async def set_user(tg_id, username: str = None, first_name: str = None) -> None:
                 telegram_id=tg_id,
                 username=username,
                 first_name=first_name,
-                credits=10,
+                credits=50,
             )
             session.add(new_user)
             await session.flush()

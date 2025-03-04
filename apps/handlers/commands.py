@@ -11,6 +11,7 @@ router = Router()
 
 @router.message(Command('start'))
 async def start_handler(message: Message):
+    print('вызов start')
     await requests.set_user(message.from_user.id, message.from_user.username, message.from_user.first_name)
     await message.answer("🌟 Привет! Рад тебя видеть в Flux AI! 🎉\nНаш бот поможет тебе создавать потрясающие изображения. Выбирай, что хочешь, и давай начнем! 👇😊",
                          reply_markup=kb.main)
@@ -22,7 +23,6 @@ async def help_handler(message: Message):
         "Flux AI — это бот для создания изображений по текстовому описанию! 🖼️\n\n"
         "💰 *Система кредитов*\n"
         "— Для генерации изображений требуются кредиты.\n"
-        "— Каждый день начисляются *бесплатные кредиты*, которые можно использовать для создания изображений.\n"
         "— Для пополнения баланса, вы можете использовать *систему оплаты через FreeKassa*.\n\n"
         "📌 *Как использовать Flux AI?*\n"
         "1️⃣ Для начала выберите параметры для создания изображения:\n"
@@ -39,8 +39,6 @@ async def help_handler(message: Message):
         parse_mode="Markdown"
     )
 
-
-
 @router.message(Command('profile'))
 async def profile_handler(message: Message):
     await show_profile(message)
@@ -48,13 +46,12 @@ async def profile_handler(message: Message):
 @router.message(Command('generate'))
 async def generate_handler(message: Message, state: FSMContext):
     await message.answer('Введите текстовое описание изображения...')
-
     await state.set_state(ImageState.waiting_for_prompt)
 
 
 @router.message(Command('buy'))
 async def buy_handler(message: Message, state: FSMContext):
-    await message.answer('Выберите сумму для пополнения (больше - дешевле)', reply_markup=kb.credits)
+    await message.answer('Выберите сумму для пополнения 💸 (большая сумма — выгоднее)', reply_markup=kb.credits)
     await state.set_state(BuyingState.waiting_for_transaction)
 
 @router.message(Command('settings'))
@@ -70,7 +67,13 @@ async def styles_handler(message: Message):
         return
 
     keyboard = await kb.get_styles_keyboard(user.telegram_id)
-    await message.answer("🎨 Выберите стиль изображения:", reply_markup=keyboard)
+    await message.answer(text=(
+            '🎨 *Выбери стиль* для генерации изображения.\n\n'
+            '💡  Стиль и размер изображения будут влиять на стоимость.\n'
+            '💵 Убедись, что у тебя достаточно кредитов для выбранного варианта.'
+        ),
+        reply_markup=keyboard,
+        parse_mode="Markdown")
 
 @router.message(Command('quality'))
 async def size_handler(message: Message):
