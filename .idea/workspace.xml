@@ -4,20 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6f736ded-ce67-4a63-a695-05d5a6545795" name="Changes" comment="Отсутствует оплата и нормальное описание для бота">
-      <change afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+    <list default="true" id="6f736ded-ce67-4a63-a695-05d5a6545795" name="Changes" comment="Готовый бот, но с logging и print()">
+      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/config.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/database/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/database/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/database/requests.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/database/requests.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/handlers/callbacks.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/handlers/callbacks.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/handlers/commands.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/handlers/commands.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/handlers/states.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/handlers/states.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/keyboards/keyboards.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/keyboards/keyboards.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/scheduler.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/scheduler.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/services/image_generattion.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/services/image_generattion.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/media/images/i.jpg" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -200,7 +194,8 @@
       <workItem from="1740741794837" duration="1538000" />
       <workItem from="1740827548004" duration="600000" />
       <workItem from="1740994851523" duration="11453000" />
-      <workItem from="1741081908041" duration="1337000" />
+      <workItem from="1741081908041" duration="3469000" />
+      <workItem from="1741178985417" duration="449000" />
     </task>
     <task id="LOCAL-00001" summary="До добавления flux для изображений">
       <option name="closed" value="true" />
@@ -250,7 +245,15 @@
       <option name="project" value="LOCAL" />
       <updated>1740032314477</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Готовый бот, но с logging и print()">
+      <option name="closed" value="true" />
+      <created>1741083299130</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1741083299130</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -272,7 +275,8 @@
     <MESSAGE value="Работает галерея, профиль и т.п." />
     <MESSAGE value="Некоторые незначительный баги, отсутствует оплата" />
     <MESSAGE value="Отсутствует оплата и нормальное описание для бота" />
-    <option name="LAST_COMMIT_MESSAGE" value="Отсутствует оплата и нормальное описание для бота" />
+    <MESSAGE value="Готовый бот, но с logging и print()" />
+    <option name="LAST_COMMIT_MESSAGE" value="Готовый бот, но с logging и print()" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/AIBot$callbacks.coverage" NAME="callbacks Coverage Results" MODIFIED="1739622681024" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/apps/handlers" />

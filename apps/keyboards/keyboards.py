@@ -60,10 +60,8 @@ async def get_styles_keyboard(user_id: int) -> InlineKeyboardMarkup:
     buttons = []
     for name, cb_data in _styles:
         model_key = name.lower()
-        print(f"Calculating price for model: {model_key}, size: {selected_size}")
 
         cost = await calculate_total_price(model_key, selected_size)
-        print(f"Cost for {name} model: {cost}")
         cost_text = f'{cost} кредит.'  if cost is not None else "N/A"
         button_text = add_checkmark_to_button(f"{name} - {cost_text}", cb_data, f"style_{selected_style}")
         buttons.append([InlineKeyboardButton(text=button_text, callback_data=cb_data)])

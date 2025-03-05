@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 import aiohttp
 from aiogram import Router, F, types
@@ -23,10 +24,9 @@ from apps.states import ImageState, BuyingState
 from dotenv import load_dotenv
 
 router = Router()
-DJANGO_API_URL = "https://4f0e-140-99-101-99.ngrok-free.app/api/check_payment/"
-
 load_dotenv('.env')
 
+DJANGO_API_URL = f"{os.getenv('DJANGO_PAYMENT_URL')}/api/check_payment/"
 def get_profile_text(user) -> str:
     return (
         "✨ *Добро пожаловать в Личный кабинет* ✨\n\n"
@@ -211,7 +211,6 @@ async def show_gallery(message: types.Message, user_id: int, offset: int = 0):
                 media_group.add(type="photo", media=item.image_url, caption=caption)
             except Exception as e:
                 await loading_message.edit_text("❌ Ошибка при загрузке изображения.")
-                print(f"Ошибка загрузки изображения: {e}")
 
         await message.answer_media_group(media_group.build())
         await loading_message.edit_text("Галерея загружена!")
@@ -263,7 +262,6 @@ async def load_more_images(callback: CallbackQuery):
                     media_group.add(type="photo", media=image_url, caption=caption)
                 except Exception as e:
                     await loading_message.edit_text("❌ Ошибка при загрузке изображения.")
-                    print(f"Ошибка загрузки изображения: {e}")
 
             await callback.message.answer_media_group(media_group.build())
             await loading_message.edit_text("Данные загружены!")
@@ -340,7 +338,6 @@ async def check_payment(callback: CallbackQuery, state: FSMContext):
         except aiohttp.ClientError as e:
             return await checking_message.edit_text(f"❌ Ошибка сети: {e}")
 
-    print("data " + str(data))
     status = data.get("status")
     transaction_status = data.get("transaction_status")
 
@@ -366,7 +363,6 @@ async def check_payment(callback: CallbackQuery, state: FSMContext):
                         message = f"✅ Оплата подтверждена! Ваш баланс пополнен на {transaction.credits_amount} кредитов."
                     except Exception as e:
                         message = "❗Ошибка начисления кредитов, обратитесь в поддержку."
-                        print(f"Ошибка при добавлении кредитов: {e}")
 
 
             elif transaction and transaction.transaction_status == "paid":

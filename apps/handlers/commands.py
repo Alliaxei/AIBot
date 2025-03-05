@@ -11,7 +11,6 @@ router = Router()
 
 @router.message(Command('start'))
 async def start_handler(message: Message):
-    print('вызов start')
     await requests.set_user(message.from_user.id, message.from_user.username, message.from_user.first_name)
     await message.answer("🌟 Привет! Рад тебя видеть в Flux AI! 🎉\nНаш бот поможет тебе создавать потрясающие изображения. Выбирай, что хочешь, и давай начнем! 👇😊",
                          reply_markup=kb.main)

@@ -58,10 +58,8 @@ async def save_image_do_db(session: AsyncSession, user_id: int, image_url: str) 
 async def calculate_total_price(model: str, size: str) -> int | None:
     """ Высчитывает итоговый ценник по формуле """
     if model not in MODEL_COSTS or model not in MODEL_MULTIPLIERS:
-        print(f"Ошибка: модель {model} не найдена.")
         return None
     if size not in SIZE_COSTS:
-        print(f"Ошибка: размер {size} не найден.")
         return None
     base_cost = MODEL_COSTS[model]
     multiplier = MODEL_MULTIPLIERS[model]
@@ -85,11 +83,9 @@ async def generate_image(prompt: str, model: str, size: str, user_id: int) -> st
     async with session:
         current_balance = await get_current_credit_balance(session, user_id)
         if current_balance is None or current_balance < total_cost:
-            print(f"Недостаточно кредитов у пользователя {user_id}. Текущий баланс: {current_balance}")
             return "insufficient_credits"
 
         if not await spend_credits(session, user_id, total_cost):
-            print(f"Ошибка списания кредитов у пользователя {user_id}")
             return "write_off_error"
 
     width, height = size.split('x')
@@ -125,7 +121,6 @@ async def generate_image(prompt: str, model: str, size: str, user_id: int) -> st
                     return image_url
                 else:
                     error_text = await response.text()
-                    print(f"Ошибка {response.status}, ответ от API:\n{error_text}")
     except Exception as e:
         return None
 
